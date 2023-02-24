@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Index</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="css.css">
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+
+<body>
+  
+  <div id="fondo">
+  <div id="map" style="height: 500px; width: 1400px;"></div></div>
+  <div id="input">
+    <label for="">Escribe un lugar:</label><br>
+  <input type="text" id="texto">
+  <input type="button" id="boton" value="Buscar"><br><br>
+  <input type="range" id="rango" min="1" max="19" value="9">
+  <p><b><span>Zoom: </span><span id="valorRango">9</span></b></p>
+  <p id="error"></p></div>
+  
+</body>
+
+</html>
+
+<script>
+
+  var map = L.map('map');
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+  }).addTo(map);
+  map.setView([27.9580004, -15.6062305376665], 9);
+
+  document.addEventListener('change', e => {
+    if (e.target.id == "rango") {
+      document.getElementById('valorRango').innerHTML = document.getElementById('rango').value;
+      if (document.getElementById('texto').value != "") {
+        const ciudad = document.getElementById('texto').value;
+        const query = `{
+        getCoordinates(city: "${ciudad}") {
+          latitude
+          longitude
+        }
+      }`;
+
+        fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ query }),
+        })
+          .then(res => res.json())
+          .then(res => {
+            map.setView([res.data.getCoordinates.latitude, res.data.getCoordinates.longitude], document.getElementById('rango').value);
+          })
+          .catch(err => console.error(err));
+      }
+    }
+  })
+  document.addEventListener('click', e => {
+    if (e.target.id == "boton") {
+      const ciudad = document.getElementById('texto').value;
+      const query = `{
+        getCoordinates(city: "${ciudad}") {
+          latitude
+          longitude
+        }
+      }`;
+
+      fetch('/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      })
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('error').innerHTML = "";
+          map.setView([res.data.getCoordinates.latitude, res.data.getCoordinates.longitude], document.getElementById('rango').value);
+        })
+        .catch(err => document.getElementById('error').innerText = 'El lugar proporcionado no existe');
+    }
+
+  })
+
+</script>
