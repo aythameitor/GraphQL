@@ -4,7 +4,6 @@ const { buildSchema } = require('graphql');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 
-// Define el esquema GraphQL
 const schema = buildSchema(`
   type Coordinates {
     latitude: Float!
